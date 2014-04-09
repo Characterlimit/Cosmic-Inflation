@@ -1,0 +1,53 @@
+//Fireballs are the meteors
+class Fireball extends GameObject
+{
+  float r;
+  float theta;
+  float omega;
+  Fireball()
+  {
+    radius = FIREBALL_RADIUS;
+    
+    r = FIREBALL_SPAWN_RADIUS;
+    theta = random(TAU);
+    omega = random(FIREBALL_MAX_OMEGA*2)-FIREBALL_MAX_OMEGA;
+    pos = new PVector(r*cos(theta) + width/2, r*sin(theta) + height/2);
+  }
+  void tick()
+  {
+    r -= FIREBALL_DESCEND_SPEED;
+    if(r < DESSERT_RADIUS)
+    {
+       removal_flag = true; // hit center, todo stuff later
+       if(!muted)burntSound.trigger();
+       burnt_timer = BURNT_TIME;
+       for(GameObject g : fireballs)
+       {
+         g.removal_flag = true;
+       }
+       game_over = true;
+       score = 0;
+       difficulty_timer = 0;
+    }
+       
+    theta += omega / r;
+    pos = new PVector(r*cos(theta) + width/2, r*sin(theta) + height/2);    
+    if(phys_clock % 6 == 0) particles.add(new FireTrail(pos));
+  }
+  void draw()
+  {
+    if(r < WARN_RADIUS)
+    {
+      float perc = map (r, WARN_RADIUS, DESSERT_RADIUS, 0, 1);
+      noFill();
+      stroke(255, 0, 0, 255*perc);
+      strokeWeight(2);
+      ellipse(width/2, height/2, r, r);
+      ellipse(pos.x, pos.y, radius*1.5, radius*1.5);
+    }
+    
+    noStroke();
+    fill(200,200,200);
+    ellipse(pos.x, pos.y, radius, radius);
+  }
+}
