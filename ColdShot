@@ -1,0 +1,57 @@
+//Coldshot is the shot that will happen when we pull the trigger and leave it
+class Coldshot extends GameObject
+{
+  PVector vel;
+  int lifetime;
+  int combo;
+  Coldshot(PVector p, PVector v)
+  {
+    pos = p.get();
+    vel = v.get();
+    lifetime = SHOT_LIFE;    
+    combo = 0;
+    radius = 10;
+  }
+  void tick()
+  {
+    pos.add(vel);
+    lifetime --;
+    if(lifetime <= 0) 
+    {
+      removal_flag = true;
+      if(combo > 1) 
+      {
+        particles.add(new ComboTag(combo));
+        if(!muted) comboSound.trigger();
+        points((combo * (combo - 1))/2);
+      }
+    }
+    particles.add(new IceTrail(pos));
+   for(GameObject g : fireballs)
+    {
+        if(inRadius(pos, g.pos, radius+g.radius))
+        {
+          g.removal_flag = true;
+          if(!muted) popSound.trigger();
+          particles.add(new FireBurst(g.pos));
+          points(1);
+          
+          combo++;
+        }
+      
+    }
+
+    
+  }
+  void draw()
+  {
+    fill(255, 255, 255);
+    noStroke();
+    pushMatrix();
+    translate(pos.x, pos.y);
+    rotate(phys_clock * 0.1);
+    rectMode(RADIUS);
+    rect(0, 0, 7, 7);
+    popMatrix();
+  }
+}
