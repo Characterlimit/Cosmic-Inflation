@@ -1,6 +1,9 @@
 import ddf.minim.*;
 
+
 PVector anchor;
+
+
 int fireball_timer;
 int charge_timer;
 int SHOT_COOLDOWN = 90;
@@ -48,18 +51,45 @@ ParticleList particles = new ParticleList();
 PImage crosshair;
 
 
+
+float FIREBALL_DESCEND_SPEED = .15;
+float FIREBALL_MAX_OMEGA = 1.3;
+float FIREBALL_SPAWN_RADIUS = 700;
+float FIREBALL_RADIUS = 20;
+
+float DESSERT_RADIUS = 90;
+float WARN_RADIUS = 300;
+
+int SHOT_LIFE = 120;
+
+
+
+
 void setup()
 {
-  //size(720, 480);
+  //Screen Size
   size(1440, 900);
+  
+  //Frame Rate
   frameRate(600);
-  backgroundPic=loadImage("SpacePic.png");
+  
+  //This is the background image
+  //backgroundPic=loadImage("SpacePic.png");
+  
+  //This is the image for the cross hair
   crosshair = loadImage("crosshair.png");
+  
+  
+  //This function initializes all the audio samples that will be played in the game
   audioInit();
+  
+  //This function is used to set the Title flag as true  
   setTitle();
-  muted=true;
 }
 
+
+//This function uses the Minim object of the DDF Library and loads the wav files for using in the game
+//Use this function to load all the future audio samples into the game as well
 void audioInit()
 {
   minim = new Minim(this);
@@ -73,6 +103,8 @@ void audioInit()
 }
 
 
+
+//This function sets the title flag as true. This flag will be used to display the title information
 void setTitle()
 {
   title = true;
@@ -84,40 +116,39 @@ void setTitle()
 
 void draw()
 {
-  if(game_over)
+  cursor(crosshair);
+  
+  //In draw function, I have a small hack which will get us the smooth effect.  For making the shots and meteors move at a certain pace and make the 
+  //screen have a different frames per second, we have two functions called Physics Step and another one called as Drawing Step. The physics step as the name suggests makes the 
+  //physics movements and the drawing step is essentially a draw function for all the sprites in the games. We can experiment a little on the feel of the game by making changes at
+  //physics_fps and drawing_fps
+  
+  
+  //This function will make all the sprites move as per our algorithm. Here unless the time reaches the point where it is supposed to make the step, the function for moving the
+  //sprites won't happen
+  while(physics_ms_last + PHYS_MS < millis())
   {
-   // background(200, 100, 70);
-    background(backgroundPic);
-    fill(255);
-    textAlign(CENTER, CENTER);
-    textSize(64);
-    text("Press Enter", width/2, height/2);
-    textAlign(RIGHT, TOP);
-    text(score, width-15, 8);
-    fill(255, 128);
-    text("top: "+top_score, width-15, 64);
+    if(!paused)
+    {
+      physicsStep();
+    }
+    physics_ms_last += PHYS_MS;
   }
-  else
+  
+  
+  //This function will draw all the sprites. Here unless the time reaches the point where it is supposed to make the step, the function for drawing the
+  //sprites won't happen
+  if(drawing_ms_last + DRAW_MS < millis())
   {
-    cursor(crosshair);
-    while(physics_ms_last + PHYS_MS < millis())
-    {
-      if(!paused)
-      {
-        physicsStep();
-      }
-      physics_ms_last += PHYS_MS;
-    }
-    if(drawing_ms_last + DRAW_MS < millis())
-    {
-      drawingStep();
-      drawing_ms_last = millis();
-    }
-  }
+    drawingStep();
+    drawing_ms_last = millis();
+   }
 }
 
+//This function is to make the steps as per the physics
 void physicsStep()
 {
+   
   phys_clock++;
   
   if(!title)
@@ -127,6 +158,7 @@ void physicsStep()
     shots.tick();
     particles.tick();
     
+    //This timer is for addition of meteors onto the screen. Once the timer hits 0, another meteor will be added onto the game
     fireball_timer --;
     if(fireball_timer <= 0)
     { 
@@ -134,6 +166,7 @@ void physicsStep()
       fireballs.add(new Fireball());
     }
     
+    //This is to identify the mousepressed event and to increase the charge amount
     if(mousePressed) 
       charge_timer++;
     else 
@@ -151,16 +184,11 @@ void physicsStep()
     top_score = max(score, top_score);
   }
   
-  //jukebox stuff
-  info_time --;
 }
 
 
 
-
-
-
-
+//This is for adding points to the score
 void points(int pts)
 {
   score += pts;
@@ -168,13 +196,17 @@ void points(int pts)
 }
 
 
+
+//This is the time in which the meteors will be generated. As  you can see it is being dynamically generated on the fly depending on the difficulty timer
+//Difficulty timer increases with every physics step
+//We can try tweaking difficulty timer to experiment 
 int fireTime()
 {
   return PHYSICS_FPS * 10 / (7 + difficulty_timer / (PHYSICS_FPS * 15));
 }
 
 
-
+//This is for closing all the opened audio samples
 void audioClose()
 {
   comboSound.close();
@@ -186,7 +218,7 @@ void audioClose()
 
 
 
-
+//Whenever someone presses enter, then when new game starts everything will be initialized in this function
 void newGame()
 {
   fireballs.clear();
@@ -209,6 +241,8 @@ void stop()
   super.stop();
 }
 
+
+//This function is used to fixate the point when someone pressed the mouse button
 void mousePressed()
 {
   if(!paused && !title)
@@ -218,13 +252,20 @@ void mousePressed()
   if(title) newGame();
 }
 
+
+//In this function the logic for finding the shot angle and checking if the mouse has been pulled for certain distance are present are not
 void mouseReleased()
 {
   if(!paused && !title && anchor != null && cooldown_timer <= 0)
   {
+    //This will help in finding the shot angle
     PVector shotangle = new PVector(anchor.x - mouseX, anchor.y - mouseY);
     shotangle.normalize();
     shotangle.mult(10);
+    
+    //This will help in checking if the anchor has been pulled for a distance or not. Currently the min dist for pulling is set at 60. Once the anchor has been pulled for enough
+    //distance it will create a new shot 
+    //We can tweak and see if we can remove that cutting through the meteor thing disabled.
     if(shotangle.mag() > 0 && PVector.dist(new PVector(mouseX, mouseY), anchor) > SHOT_MINDIST)
     {
      shots.add(new Coldshot(new PVector(mouseX, mouseY), shotangle));
@@ -235,19 +276,24 @@ void mouseReleased()
 }
 
 
+//This is just a drawing step for drawing all the sprites in the game
 void drawingStep()
 {
   if(title)
   {
     drawTitle();
   }
+  else if(game_over)
+  {
+     drawGameOver();
+  }
   else
   { 
-    //background(32, 0, 64);
-    background(backgroundPic);
+    
+    //background(backgroundPic);
+    //background(200, 100, 70);
+    background(32, 0, 64);
     ellipseMode(RADIUS);
-    //fill(0, 192, 255, 24);
-    //stroke(0, 192, 255, 48);
     fill(204, 255, 100, 48);
     stroke(250, 0, 0, 90);
     strokeWeight(2);
@@ -267,17 +313,6 @@ void drawingStep()
      
     ellipse(width/2, height/2, sizer, sizer);
     
-    
-    /*ellipse(width/2, height/2, DESSERT_RADIUS, DESSERT_RADIUS);
-    fill(230, 250, 250);
-    noStroke();
-    if(burnt_timer < -APPEAR_TIME)
-    {
-       ellipse(width/2, min(height/2-18, -(burnt_timer +APPEAR_TIME) + height/2 - 50), 20, 20);
-    }
-    fill(192, 128, 64);
-    triangle(width/2 - 16, height/2 - 8, width/2 + 16, height/2 - 8, width/2, height/2 + 32); 
-    */
     particles.draw();
     fireballs.draw();
     shots.draw();
@@ -308,14 +343,6 @@ void drawingStep()
     }
     noSmooth();
     
-    if(burnt_timer > 0)
-    {
-    fill(255, 512*burnt_timer/BURNT_TIME, 255*burnt_timer/BURNT_TIME, 255*burnt_timer/BURNT_TIME);
-    noStroke();
-    rectMode(CORNERS);
-    rect(0, 0, width, height);
-    }
-    
     fill(255, 128 + 127* score_timer / SCORE_TIME);
     textAlign(RIGHT, TOP);
     text(score, width-15, 8);
@@ -326,19 +353,32 @@ void drawingStep()
     if(paused) drawPauseOverlay();
   }
   
-  //jukebox stuff
-  drawSongInfo();
 }
 
+
+//These are for drawing title, game over screen and for creating pause overlay over the complete screen
 void drawTitle()
 {
   background(200, 100, 70);
   fill(255);
   textAlign(CENTER, CENTER);
-  text("Dessert Stressed", width/2, height/2);
-  text("Use your chillshot to defend\nyour ice cream from fireballs.", width/2, height*2/3);
+  text("Cosmic Inflation", width/2, height/2);
+  text("Press Enter Or Click To Start The Game", width/2, height*2/3);
 }
 
+void drawGameOver()
+{
+  background(200, 100, 70);
+  //background(backgroundPic);
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(64);
+  text("Press Enter", width/2, height/2);
+  textAlign(RIGHT, TOP);
+  text(score, width-15, 8);
+  fill(255, 128);
+  text("top: "+top_score, width-15, 64);
+}
 void drawPauseOverlay()
 {
   rectMode(CORNER);
@@ -353,7 +393,7 @@ void drawPauseOverlay()
 
 
 
-
+//These are the key board handling functions. As of now, we are only using "M" for Mute, "P" for Pause and "Return" for starting a new game.
 void keyPressed()
 {
   if(keyCode < 256)
