@@ -1,0 +1,14 @@
+//Firetrail is the trail left behind by the meteor
+class FireTrail extends Particle
+{
+  FireTrail(PVector p)
+  {
+    super(p, randomVector(0.3), 60);
+  }
+  void draw()
+  {
+    noStroke();
+    fill(255, 512*life/maxlife, 255*life/maxlife);
+    ellipse(pos.x, pos.y, FIREBALL_RADIUS*life/maxlife, FIREBALL_RADIUS*life/maxlife);
+  }
+}
