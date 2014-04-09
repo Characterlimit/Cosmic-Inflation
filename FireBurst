@@ -1,0 +1,17 @@
+//This is the explosion that was caused when a meteor hits our shot
+class FireBurst extends Particle
+{
+  FireBurst(PVector p)
+  {
+    super(p, randomVector(0), 60);
+  }
+  void draw()
+  {
+    stroke(255, 512*life/maxlife, 255*life/maxlife);
+    strokeWeight(2);
+    noFill();
+    smooth();
+    ellipse(pos.x, pos.y, FIREBALL_RADIUS * (6 -5.0*life/maxlife), FIREBALL_RADIUS * (6 -5.0*life/maxlife));
+    noSmooth();
+  }
+}
