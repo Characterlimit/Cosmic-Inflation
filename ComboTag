@@ -1,0 +1,16 @@
+//This is for showing that combo score thing
+class ComboTag extends Particle
+{
+  int a;
+  ComboTag(int amt)
+  {
+    super(new PVector(width/2, height/4), new PVector(0, -0.15), 270);
+    a = amt;
+  }
+  void draw()
+  {
+    fill(255*life/maxlife, 255, 255, 255*life/maxlife);
+    textAlign(CENTER, CENTER);
+    text(a+" COMBO", pos.x, pos.y);
+  }
+}
